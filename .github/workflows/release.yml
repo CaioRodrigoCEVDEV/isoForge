@@ -224,7 +224,9 @@ jobs:
 
       - name: Generate SHA256SUMS
         run: |
-          sha256sum dist/*.deb dist/*.AppImage > dist/SHA256SUMS
+          # Keep basenames only so users can run `sha256sum -c SHA256SUMS`
+          # in the directory where the release assets were downloaded.
+          (cd dist && sha256sum *.deb *.AppImage > SHA256SUMS)
           cat dist/SHA256SUMS
 
       - name: Create or update GitHub pre-release
