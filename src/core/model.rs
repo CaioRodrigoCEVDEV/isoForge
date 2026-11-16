@@ -148,7 +148,6 @@ pub const ESSENTIAL_PATHS: &[&str] = &[
     "/boot/bcd",
     "/boot/bootsect.exe",
     "/boot/etfsboot.com",
-    "/boot.catalog",
     "/efi/boot/bootx64.efi",
     "/efi/microsoft/boot/bootmgfw.efi",
     "/efi/microsoft/boot/efisys.bin",

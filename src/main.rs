@@ -503,11 +503,11 @@ fn start_open(
                         match refresh_file_list(
                             &ui.list, &ui.scroll, &ui.status, &rows, &expanded, &root,
                         ) {
-                            Ok(visible) => {
+                            Ok(_visible) => {
                                 ui.list.unselect_all();
                                 let total = scan_tree(&root).0;
                                 let mut text = format!(
-                                    "ISO aberta. {total} arquivos extraídos ({visible} itens visíveis). \
+                                    "ISO aberta. {total} arquivos extraídos. \
                                      Boot: {}. {}",
                                     metadata.boot_summary(),
                                     if metadata.has_udf {
@@ -620,6 +620,7 @@ fn show_inspection_dialog(
         .transient_for(&ui.window)
         .modal(true)
         .default_width(680)
+        .default_height(720)
         .build();
 
     let outer = GtkBox::new(Orientation::Vertical, 12);
@@ -635,7 +636,7 @@ fn show_inspection_dialog(
     let subtitle = Label::new(Some(&format!("Destino: {}", output.display())));
     subtitle.set_halign(gtk::Align::Start);
     subtitle.set_wrap(true);
-    subtitle.set_selectable(true);
+    subtitle.set_selectable(false);
     subtitle.set_opacity(0.8);
 
     let grid = Grid::builder()
@@ -653,7 +654,7 @@ fn show_inspection_dialog(
         let value = Label::new(Some(value));
         value.set_halign(gtk::Align::Start);
         value.set_wrap(true);
-        value.set_selectable(true);
+        value.set_selectable(false);
         value.set_hexpand(true);
         grid.attach(&key, 0, index as i32, 1, 1);
         grid.attach(&value, 1, index as i32, 1, 1);
@@ -672,7 +673,7 @@ fn show_inspection_dialog(
         label.add_css_class("error");
         label.set_halign(gtk::Align::Start);
         label.set_wrap(true);
-        label.set_selectable(true);
+        label.set_selectable(false);
         content.append(&label);
     }
 
@@ -683,7 +684,7 @@ fn show_inspection_dialog(
         label.add_css_class("warning");
         label.set_halign(gtk::Align::Start);
         label.set_wrap(true);
-        label.set_selectable(true);
+        label.set_selectable(false);
         content.append(&label);
     }
 
@@ -1065,7 +1066,7 @@ fn show_validation_dialog(ui: &Rc<Ui>, build: &BuildResult, report: &ValidationR
     )));
     output.set_halign(gtk::Align::Start);
     output.set_wrap(true);
-    output.set_selectable(true);
+    output.set_selectable(false);
     output.set_opacity(0.8);
     outer.append(&output);
 
@@ -1131,7 +1132,7 @@ fn show_validation_dialog(ui: &Rc<Ui>, build: &BuildResult, report: &ValidationR
         let detail = Label::new(Some(&check.detail));
         detail.set_halign(gtk::Align::Start);
         detail.set_wrap(true);
-        detail.set_selectable(true);
+        detail.set_selectable(false);
         detail.set_opacity(0.75);
         text.append(&label);
         text.append(&detail);

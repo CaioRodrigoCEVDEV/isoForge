@@ -8,6 +8,20 @@ The reconstruction path preserves ISO9660, UDF and El Torito boot metadata for
 the formats listed below. It does **not** claim that a generated image is
 bootable until an actual VM boot test succeeds.
 
+## Interface
+
+![ISOForge demo: expandable file tree](docs/screenshots/demo.gif)
+
+*The demo animation uses a small synthetic Windows-like ISO and shows the expandable file tree with folder/file icons and sizes.*
+
+![ISOForge main window](docs/screenshots/main-window.png)
+
+| Inspection before rebuild | Validation report |
+|---|---|
+| ![Inspection dialog](docs/screenshots/inspection.png) | ![Validation report](docs/screenshots/validation-report.png) |
+
+The screenshots use a demo ISO. The application UI is currently in Portuguese (pt-BR). The validation report shows the structural PASS and the explicit WARNING that no VM boot test was executed. ISOForge does not label an image as bootable without an actual boot test.
+
 ## What works
 
 - Inspect ISO9660, ISO9660:1999, Joliet, Rock Ridge, UDF, El Torito, BIOS/UEFI
@@ -23,7 +37,7 @@ bootable until an actual VM boot test succeeds.
 - Validate the generated image: UDF/ISO9660 layers, El Torito entries, boot
   image bytes, BOOTMGR/EFI/install.wim/install.esd, workspace file integrity and
   `autounattend.xml` when present.
-- Batch/extraction/rebuild progress, cancellation and background work.
+- Extraction/rebuild progress, cancellation and background work.
 - Never overwrite the original ISO. The output is written to a temporary file
   and renamed only after a quick structural check.
 - Workspace is created on a disk-backed cache directory, not in `/tmp` (which

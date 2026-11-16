@@ -56,9 +56,9 @@ pub fn estimate_output_size(metadata: &IsoMetadata, tree: Option<&Path>) -> u64 
     // In a hybrid ISO the ISO9660 and UDF layers can share data extents, as
     // verified with genisoimage 1.1.11. The output is therefore close to the
     // larger of the extracted tree and the original image.
-    tree_bytes
-        .max(metadata.size)
-        .saturating_add(32 * 1024 * 1024)
+    let base = tree_bytes.max(metadata.size);
+    let overhead = (base / 100).max(8 * 1024 * 1024);
+    base.saturating_add(overhead)
 }
 
 fn common_blockers(metadata: &IsoMetadata) -> Vec<String> {
