@@ -1,0 +1,12 @@
+[package]
+name = "isoforge"
+version = "0.2.0"
+edition = "2021"
+description = "Native Linux ISO image editor"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+gtk = { package = "gtk4", version = "0.9" }
+walkdir = "2.5"
+tempfile = "3.13"
+libc = "0.2"
