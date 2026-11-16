@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=ISOForge
+GenericName=ISO Image Editor
+Comment=Inspect, edit and rebuild bootable ISO images
+Exec=isoforge
+Icon=io.github.isoforge.ISOForge
+Terminal=false
+Categories=Utility;Archiving;
+Keywords=ISO;image;boot;UEFI;BIOS;Windows;xorriso;
+StartupNotify=true
+StartupWMClass=io.github.isoforge.ISOForge

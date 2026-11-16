@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="ISOForge">
+  <rect width="512" height="512" rx="112" fill="#151d24"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#2b3b48" stroke-width="4"/>
+  <circle cx="246" cy="246" r="150" fill="#9fd8ff"/>
+  <circle cx="246" cy="246" r="136" fill="#24465c"/>
+  <circle cx="246" cy="246" r="108" fill="#6fa8c7"/>
+  <circle cx="246" cy="246" r="96" fill="#24465c"/>
+  <circle cx="246" cy="246" r="46" fill="#9fd8ff"/>
+  <circle cx="246" cy="246" r="32" fill="#0e171f"/>
+  <path d="M246 96 A150 150 0 0 1 392 214" fill="none" stroke="#eaf6ff" stroke-width="10" stroke-linecap="round"/>
+  <path d="M360 296 C392 326 398 372 372 402 C352 426 318 432 292 418 C314 404 328 384 328 360 C328 340 340 318 360 296 Z" fill="#ff9f43" stroke="#2a1a12" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M352 352 C368 370 366 390 350 404 C340 412 326 410 318 402 C330 396 338 386 338 370 C338 362 344 356 352 352 Z" fill="#ffe6a6"/>
+</svg>

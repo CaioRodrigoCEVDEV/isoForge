@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.isoforge.ISOForge</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>ISOForge</name>
+  <summary>Inspect, edit and rebuild bootable ISO images</summary>
+  <description>
+    <p>
+      ISOForge is a native Linux ISO editor. It inspects ISO9660 and UDF
+      images, extracts a temporary workspace, lets you add or remove files,
+      and rebuilds a new image while preserving El Torito BIOS/UEFI boot
+      metadata when the format is supported.
+    </p>
+    <p>
+      The original image is never modified. Generated images are validated
+      structurally, and the app does not claim that an image boots until an
+      actual VM boot test succeeds.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.isoforge.ISOForge.desktop</launchable>
+  <url type="homepage">https://github.com/CaioRodrigoCEVDEV/isoForge</url>
+  <developer id="io.github.caiorodrigocev">
+    <name>Caio Rodrigo</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.2.0" date="2026-11-16"/>
+  </releases>
+</component>

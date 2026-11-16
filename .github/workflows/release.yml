@@ -1,0 +1,246 @@
+name: Release
+
+# Tags are the source of truth. The workflow never creates tags; manual runs
+# require an existing tag and the release step uses `gh --verify-tag`.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing git tag to build and publish (e.g. v0.2.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  LINUXDEPLOY_VERSION: '1-alpha-20251107-1'
+  GTK_PLUGIN_COMMIT: '7a3fbc31a9e5075073ff8790f26effbac5f84453'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test:
+    name: Test (Ubuntu 24.04)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: isoforge-linux-x86_64
+          workspaces: .
+
+      - name: Install build and test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libgtk-4-dev \
+            xorriso p7zip-full genisoimage
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run tests
+        run: cargo test --locked --all-targets
+
+  package:
+    name: Build DEB and AppImage
+    runs-on: ubuntu-24.04
+    needs: test
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: isoforge-linux-x86_64
+          workspaces: .
+
+      - name: Install packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libgtk-4-dev \
+            xorriso p7zip-full genisoimage \
+            dpkg-dev desktop-file-utils file patchelf xvfb xauth appstream \
+            libgtk-4-bin libglib2.0-bin libgdk-pixbuf2.0-bin
+
+      - name: Verify tag matches Cargo version
+        run: |
+          VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
+          if [ -z "$VERSION" ]; then
+            echo "Could not read the version from Cargo.toml" >&2
+            exit 1
+          fi
+          if [ "v$VERSION" != "$TAG" ]; then
+            echo "Tag '$TAG' does not match Cargo version 'v$VERSION'" >&2
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Building ISOForge $VERSION for tag $TAG"
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Build DEB package
+        run: bash packaging/build-deb.sh "$VERSION" dist
+
+      - name: Download linuxdeploy and GTK plugin
+        run: |
+          mkdir -p tools
+          curl -fL --retry 3 --retry-delay 2 -o tools/linuxdeploy \
+            "https://github.com/linuxdeploy/linuxdeploy/releases/download/${LINUXDEPLOY_VERSION}/linuxdeploy-x86_64.AppImage"
+          chmod +x tools/linuxdeploy
+          curl -fL --retry 3 --retry-delay 2 -o tools/linuxdeploy-plugin-gtk.sh \
+            "https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/${GTK_PLUGIN_COMMIT}/linuxdeploy-plugin-gtk.sh"
+          chmod +x tools/linuxdeploy-plugin-gtk.sh
+
+      - name: Build AppImage
+        run: bash packaging/build-appimage.sh "$VERSION" dist tools
+
+      - name: Validate DEB package
+        run: |
+          DEB="$(find dist -maxdepth 1 -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          echo "Validating $DEB"
+          dpkg-deb --info "$DEB"
+          dpkg-deb --contents "$DEB"
+          rm -rf build/deb-extract
+          mkdir -p build/deb-extract
+          dpkg-deb --extract "$DEB" build/deb-extract
+          test -x build/deb-extract/usr/bin/isoforge
+          test -f build/deb-extract/usr/share/applications/io.github.isoforge.ISOForge.desktop
+          test -f build/deb-extract/usr/share/icons/hicolor/256x256/apps/io.github.isoforge.ISOForge.png
+          desktop-file-validate \
+            build/deb-extract/usr/share/applications/io.github.isoforge.ISOForge.desktop
+          appstreamcli validate --no-net \
+            build/deb-extract/usr/share/metainfo/io.github.isoforge.ISOForge.metainfo.xml
+          file build/deb-extract/usr/bin/isoforge
+
+      - name: Validate AppImage structure
+        run: |
+          APPIMAGE="$(find dist -maxdepth 1 -name '*.AppImage' -print -quit)"
+          test -n "$APPIMAGE"
+          echo "Validating $APPIMAGE"
+          file "$APPIMAGE"
+          APPIMAGE_ABS="$(realpath "$APPIMAGE")"
+          rm -rf build/appimage-extract
+          mkdir -p build/appimage-extract
+          (
+            cd build/appimage-extract
+            "$APPIMAGE_ABS" --appimage-extract >/dev/null
+          )
+          test -x build/appimage-extract/squashfs-root/usr/bin/isoforge
+          find build/appimage-extract/squashfs-root -name 'io.github.isoforge.ISOForge.desktop' | grep -q .
+          find build/appimage-extract/squashfs-root -name 'io.github.isoforge.ISOForge.png' | grep -q .
+
+      - name: AppImage smoke test (Xvfb)
+        run: |
+          APPIMAGE="$(find dist -maxdepth 1 -name '*.AppImage' -print -quit)"
+          APPIMAGE_ABS="$(realpath "$APPIMAGE")"
+          mkdir -p build
+          set +e
+          APPIMAGE_EXTRACT_AND_RUN=1 timeout 20 \
+            xvfb-run -a "$APPIMAGE_ABS" >build/appimage-smoke.log 2>&1
+          code=$?
+          set -e
+          if [ "$code" -ne 124 ]; then
+            echo "AppImage did not stay running (exit code $code). Log:" >&2
+            cat build/appimage-smoke.log >&2
+            exit 1
+          fi
+          echo "AppImage stayed running under Xvfb (smoke test passed)."
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: isoforge-deb
+          path: dist/*.deb
+          if-no-files-found: error
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: isoforge-appimage
+          path: dist/*.AppImage
+          if-no-files-found: error
+
+  release:
+    name: Publish pre-release
+    runs-on: ubuntu-24.04
+    needs: package
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Flatten artifact paths
+        run: |
+          find dist -mindepth 2 -type f \( -name '*.deb' -o -name '*.AppImage' \) -exec mv -t dist {} +
+          ls -l dist
+
+      - name: Generate SHA256SUMS
+        run: |
+          sha256sum dist/*.deb dist/*.AppImage > dist/SHA256SUMS
+          cat dist/SHA256SUMS
+
+      - name: Create or update GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; uploading assets with --clobber."
+            gh release upload "$TAG" \
+              dist/*.deb dist/*.AppImage dist/SHA256SUMS --clobber
+          else
+            gh release create "$TAG" \
+              dist/*.deb dist/*.AppImage dist/SHA256SUMS \
+              --title "ISOForge $TAG" \
+              --generate-notes \
+              --prerelease \
+              --verify-tag
+          fi
+          gh release view "$TAG" --json url --jq .url

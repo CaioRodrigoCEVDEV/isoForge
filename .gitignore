@@ -1,2 +1,8 @@
 /target
 *.iso
+/build
+/dist
+/tools
+*.deb
+*.AppImage
+*.AppImage.zsync

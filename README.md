@@ -60,6 +60,42 @@ The validation report shows the ISO9660/UDF size difference as a **WARNING**,
 not as a failure, because it is expected with `-allow-limited-size` and the UDF
 layer carries the complete content.
 
+## Download and installation
+
+Packages are produced by the `Release` GitHub Actions workflow. The first
+planned publication is the **pre-release `v0.2.0`** for Linux x86_64. See the
+[GitHub Releases](https://github.com/CaioRodrigoCEVDEV/isoForge/releases) page
+and the detailed [packaging and release guide](docs/RELEASING.md).
+
+### Debian package
+
+```bash
+sudo apt install ./isoforge_0.2.0_amd64.deb
+isoforge
+```
+
+The package declares its runtime dependencies (`libgtk-4-1`, `xorriso`,
+`p7zip-full`, `genisoimage`), so `apt install ./file.deb` resolves them.
+
+### AppImage
+
+```bash
+chmod +x ISOForge-0.2.0-x86_64.AppImage
+./ISOForge-0.2.0-x86_64.AppImage
+```
+
+GTK4 libraries and GTK resources are bundled. The AppImage does **not** bundle
+the external tools: the host must have `xorriso`, `7z` (p7zip-full) and
+`genisoimage`. The release AppImage is built and smoke-tested on Ubuntu 24.04;
+glibc comes from the host, so older distributions are not guaranteed. If FUSE
+is unavailable, run it with `APPIMAGE_EXTRACT_AND_RUN=1`.
+
+### Verify the download
+
+```bash
+sha256sum -c SHA256SUMS
+```
+
 ## Dependencies (Ubuntu)
 
 ```bash
@@ -96,6 +132,9 @@ ISOForge also checks `PATH` and the local fallback
 ```bash
 cargo run
 ```
+
+For local `.deb` and `.AppImage` builds, release tagging, and SHA256
+verification, see [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Workflow
 
